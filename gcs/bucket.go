@@ -3,9 +3,12 @@ package gcs
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"cloud.google.com/go/storage"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 )
 
@@ -14,8 +17,9 @@ func CreateBucket(projectID, bucketName, location string) error {
 	ctx := context.Background()
 
 	// Use your service account key JSON file
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile("path/to/your-service-account.json"))
+	client, err := storage.NewClient(ctx, option.WithCredentialsFile(os.Getenv("SERVICE_ACCOUNT_JSON_FILE_PATH")))
 	if err != nil {
+		log.Panicln(err)
 		return fmt.Errorf("failed to create client: %v", err)
 	}
 	defer client.Close()
@@ -28,13 +32,15 @@ func CreateBucket(projectID, bucketName, location string) error {
 
 	bucket := client.Bucket(bucketName)
 	bucketAttrs := &storage.BucketAttrs{
-		Location: location, // e.g. "US", "ASIA", "EU"
+		Location:                 location, // e.g. "US", "ASIA", "EU",
+		UniformBucketLevelAccess: storage.UniformBucketLevelAccess{Enabled: true},
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	if err := bucket.Create(ctx, projectID, bucketAttrs); err != nil {
+		log.Panicln(err)
 		return fmt.Errorf("failed to create bucket: %v", err)
 	}
 
@@ -46,7 +52,13 @@ func CreateBucket(projectID, bucketName, location string) error {
 func BucketExists(bucketName string) (bool, error) {
 	ctx := context.Background()
 
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile("path/to/your-service-account.json"))
+	println(bucketName)
+
+	credentialPath := os.Getenv("SERVICE_ACCOUNT_JSON_FILE_PATH")
+
+	println(credentialPath)
+
+	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credentialPath))
 	if err != nil {
 		return false, fmt.Errorf("failed to create storage client: %v", err)
 	}
@@ -56,8 +68,15 @@ func BucketExists(bucketName string) (bool, error) {
 	if err != nil {
 		if err == storage.ErrBucketNotExist {
 			return false, nil
+		} else if e, ok := err.(*googleapi.Error); ok {
+			if e.Code == 403 || e.Code == 404 {
+				// Treat both 403 and 404 as "bucket doesn't exist" (to handle permission-limited environments)
+				return false, nil
+			}
+		} else {
+			return false, fmt.Errorf("error checking bucket: %v", err)
 		}
-		return false, fmt.Errorf("error checking bucket: %v", err)
+
 	}
 
 	return true, nil
