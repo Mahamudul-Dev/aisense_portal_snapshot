@@ -1,0 +1,51 @@
+{
+    "device_id": 3,
+    "bucket_name": "RPI5_1",
+    "image": "local_file_path",
+    "file_available": true,
+    "detection": {
+        "people": [
+            {
+                "distance": {
+                    "bottom_left": 1,
+                    "bottom_right": 1,
+                    "top_left": 1,
+                    "top_right": 1
+                },
+                "cordinate": {
+                    "w": 100,
+                    "x": 100,
+                    "y": 100
+                }
+            },
+            {
+                "distance": {
+                    "bottom_left": 1,
+                    "bottom_right": 1,
+                    "top_left": 1,
+                    "top_right": 1
+                },
+                "cordinate": {
+                    "w": 100,
+                    "x": 100,
+                    "y": 100
+                }
+            }
+        ],
+        "car": [
+            {
+                "distance": {
+                    "bottom_left": 1,
+                    "bottom_right": 1,
+                    "top_left": 1,
+                    "top_right": 1
+                },
+                "cordinate": {
+                    "w": 100,
+                    "x": 100,
+                    "y": 100
+                }
+            }
+        ]
+    }
+}
